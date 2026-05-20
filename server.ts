@@ -2,7 +2,6 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
-import { createServer as createViteServer } from "vite";
 
 // Load environment variables
 dotenv.config();
@@ -203,23 +202,33 @@ Dynamic variation parameter: ${randomSalt}`,
 
 // Static server startup and setup Vite Dev Server / Static Hosting for production
 async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
+    // Only serve static assets if not running on Vercel (as Vercel handles static routing natively)
+    if (!process.env.VERCEL) {
+      const distPath = path.join(process.cwd(), "dist");
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        res.sendFile(path.join(distPath, "index.html"));
+      });
+    }
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Srijon Server] running securely on host 0.0.0.0 and port ${PORT}`);
-  });
+  // Only bind port and listen if not on Vercel serverless environment
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`[Srijon Server] running securely on host 0.0.0.0 and port ${PORT}`);
+    });
+  }
 }
 
 startServer();
+
+// Export the app for Vercel Serverless Function compatibility
+export default app;
