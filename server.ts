@@ -202,6 +202,12 @@ Dynamic variation parameter: ${randomSalt}`,
 
 // Static server startup and setup Vite Dev Server / Static Hosting for production
 async function startServer() {
+  // Explicit route for Google Search Console verification file to bypass Vite/SPA fallback
+  app.get("/google5e0ba538bffe5b46.html", (req, res) => {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(path.join(process.cwd(), "public", "google5e0ba538bffe5b46.html"));
+  });
+
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
