@@ -15,7 +15,7 @@ app.use(express.json());
 // Initialize the GoogleGenAI client with the required User-Agent
 let ai: GoogleGenAI | null = null;
 try {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   if (apiKey) {
     ai = new GoogleGenAI({
       apiKey,
@@ -26,7 +26,7 @@ try {
       },
     });
   } else {
-    console.warn("Warning: GEMINI_API_KEY is not defined in the environment.");
+    console.warn("Warning: Neither VITE_GEMINI_API_KEY nor GEMINI_API_KEY is defined in the environment.");
   }
 } catch (error) {
   console.error("Failed to initialize GoogleGenAI:", error);
@@ -35,7 +35,7 @@ try {
 // Helper to check and get Gemini client or throw safe error
 function getAiClient(): GoogleGenAI {
   if (!ai) {
-    throw new Error("GEMINI_API_KEY is not configured on the server. Please add it via the Settings > Secrets menu.");
+    throw new Error("Gemini API key is not configured on the server. Please configure GEMINI_API_KEY or VITE_GEMINI_API_KEY via the Settings > Secrets menu.");
   }
   return ai;
 }
