@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Srijon AI - Creative Lounge",
+  "description": "An interactive bilingual (Bengali & English) workspace for AI-powered poetry, seasonal sound/vibe presets, and beautiful custom canvas poem card downloads with real-time speech recitations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
