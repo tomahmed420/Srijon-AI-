@@ -19,9 +19,12 @@ export default function SplashHeader({
             <Sparkles className="w-4.5 h-4.5 text-amber-700 animate-spin" style={{ animationDuration: '6s' }} />
           </div>
           <div className="text-left">
-            <h1 className="text-base sm:text-lg font-serif font-bold tracking-tight text-[#3d2510] flex items-center gap-1.5">
+            <h1 className="text-base sm:text-lg font-serif font-bold tracking-tight text-[#3d2510] flex items-center flex-wrap gap-1.5">
               <span>{language === "bn" ? "সৃজন" : "Srijon"}</span>
               <span className="text-[10px] tracking-wide px-1.5 py-0.2 rounded bg-amber-700/10 text-amber-805 font-bold">AI</span>
+              <span className="hidden md:inline-block text-xs text-amber-850/70 font-normal font-sans">
+                — {language === "bn" ? "বাংলা কবিতা জেনারেটর ও বাংলা AI" : "Bengali Poetry Generator & Bengali AI Writer"}
+              </span>
             </h1>
           </div>
         </div>

@@ -131,23 +131,23 @@ I find you always by my side."`;
 
     if (language === "bn") {
       if (isDefault) {
-        dynamicTitle = "সৃজন AI — বাংলা কবিতা তৈরির সেরা AI | Srijon AI";
-        dynamicDesc = "সৃজন AI (Srijon AI) — আধুনিক কৃত্রিম বুদ্ধিমত্তা দিয়ে সেকেন্ডেই তৈরি করুন যেকোনো বিষয়ের বাংলা কবিতা, ছড়া ও গজল। রবীন্দ্রনাথ, নজরুল বা জীবনানন্দের নিজস্ব সাহিত্যিক শৈলীতে অনন্য সৃষ্টি!";
+        dynamicTitle = "সৃজন AI — বাংলা কবিতা জেনারেটর ও বাংলা AI (Srijon AI)";
+        dynamicDesc = "সৃজন AI (Srijon AI) হলো আধুনিক কৃত্রিম বুদ্ধিমত্তা সমৃদ্ধ সর্বসেরা বাংলা কবিতা জেনারেটর ও AI Writer বাংলা প্ল্যাটফর্ম। বুদ্ধিমান বাংলা ব্যাকরণ AI ও গভীর সাহিত্যিক শৈলী সম্পন্ন!";
       } else {
         const topic = prompt.trim() ? `"${prompt.trim().substring(0, 18)}..."` : "কবিতা";
-        dynamicTitle = `সৃজন AI — ${topic} — শৈলী: ${authorName}`;
+        dynamicTitle = `সৃজন AI — ${topic} — বাংলা কবিতা জেনারেটর`;
         const fragment = poemText.replace(/[\n\r“”""'']/g, " ").trim().substring(0, 100);
-        dynamicDesc = `সৃজন AI তে রচিত ${authorName}-এর অনুকরণে গভীর আবেগ ও কাব্যের রূপকল্প: "${fragment}..."`;
+        dynamicDesc = `সৃজন AI (বাংলা কবিতা জেনারেটর ও AI Writer বাংলা) অ্যাপের মাধ্যমে ${authorName}-এর শৈলীতে রেন্ডারকৃত অনন্য কাব্য: "${fragment}..."`;
       }
     } else {
       if (isDefault) {
-        dynamicTitle = "Srijon AI — The Ultimate Bengali & English AI Poem Generator";
-        dynamicDesc = "Srijon AI (সৃজন AI) — Create beautiful poetry, modern lyrics, and rhyming verses instantly using advanced Gemini AI. Choose from legendary poet styles!";
+        dynamicTitle = "Srijon AI — Bengali Poetry Generator & Bengali AI Writer";
+        dynamicDesc = "Srijon AI (সৃজন AI) is an advanced Bengali Poetry Generator & Bengali AI Writer powered by cutting-edge Gemini models and deep Bengali Grammar AI metrics.";
       } else {
         const topic = prompt.trim() ? `"${prompt.trim().substring(0, 18)}..."` : "Poetic Verses";
-        dynamicTitle = `Srijon AI — ${topic} — Style: ${authorName}`;
+        dynamicTitle = `Srijon AI — ${topic} — Bengali Poetry Generator`;
         const fragment = poemText.replace(/[\n\r“”""'']/g, " ").trim().substring(0, 100);
-        dynamicDesc = `A beautiful poem composed via Srijon AI in the stylistic tradition of ${authorName}: "${fragment}..."`;
+        dynamicDesc = `A beautiful creation curated via Srijon AI (Bengali Poetry Generator & Bengali AI Writer) in the style of ${authorName}: "${fragment}..."`;
       }
     }
 
