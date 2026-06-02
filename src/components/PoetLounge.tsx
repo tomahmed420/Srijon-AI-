@@ -131,13 +131,13 @@ I find you always by my side."`;
 
     if (language === "bn") {
       if (isDefault) {
-        dynamicTitle = "সৃজন AI — বাংলা কবিতা জেনারেটর ও বাংলা AI (Srijon AI)";
-        dynamicDesc = "সৃজন AI (Srijon AI) হলো আধুনিক কৃত্রিম বুদ্ধিমত্তা সমৃদ্ধ সর্বসেরা বাংলা কবিতা জেনারেটর ও AI Writer বাংলা প্ল্যাটফর্ম। বুদ্ধিমান বাংলা ব্যাকরণ AI ও গভীর সাহিত্যিক শৈলী সম্পন্ন!";
+        dynamicTitle = "সৃজন AI — বাংলা কবিতা এআই ও বাংলা লেখা টুলস বাংলাদেশ";
+        dynamicDesc = "সৃজন AI (সৃজন এআই বাংলাদেশ) হলো আধুনিক কৃত্রিম বুদ্ধিমত্তা সমৃদ্ধ সর্বসেরা বাংলা কবিতা এআই এবং সেরা বাংলা লেখা টুলস প্ল্যাটফর্ম। বুদ্ধিমান বাংলা ব্যাকরণ AI ও গভীর সাহিত্যিক শৈলী সম্পন্ন!";
       } else {
         const topic = prompt.trim() ? `"${prompt.trim().substring(0, 18)}..."` : "কবিতা";
-        dynamicTitle = `সৃজন AI — ${topic} — বাংলা কবিতা জেনারেটর`;
+        dynamicTitle = `সৃজন এআই বাংলাদেশ — ${topic} — বাংলা কবিতা এআই`;
         const fragment = poemText.replace(/[\n\r“”""'']/g, " ").trim().substring(0, 100);
-        dynamicDesc = `সৃজন AI (বাংলা কবিতা জেনারেটর ও AI Writer বাংলা) অ্যাপের মাধ্যমে ${authorName}-এর শৈলীতে রেন্ডারকৃত অনন্য কাব্য: "${fragment}..."`;
+        dynamicDesc = `সৃজন AI (সৃজন এআই বাংলাদেশ: বাংলা কবিতা এআই ও বাংলা লেখা টুলস) অ্যাপের মাধ্যমে ${authorName}-এর শৈলীতে রেন্ডারকৃত অনন্য কাব্য: "${fragment}..."`;
       }
     } else {
       if (isDefault) {
@@ -638,10 +638,10 @@ I find you always by my side."`;
               </div>
               <div className="text-left">
                 <h2 className="text-base font-serif font-bold text-[#3d2510]">
-                  {language === "bn" ? "শব্দকুঞ্জ লেখনী" : "Srijon Creative Desk"}
+                  {language === "bn" ? "সৃজন এআই বাংলাদেশ — বাংলা লেখা টুলস" : "Srijon Creative Desk — Bengali AI Writer"}
                 </h2>
                 <span className="text-[11px] text-[#705e4a] font-serif block">
-                  {language === "bn" ? "ভাবনা ও মনন ফুটিয়ে তুলুন জেমিনি দিয়ে" : "Shape emotions with poetic assistance"}
+                  {language === "bn" ? "বাংলা কবিতা এআই ও জেমিনি প্রযুক্তির সাহায্যে মনের শব্দ সাজান" : "Shape emotions with advanced Bengali Poetry Generator assistance"}
                 </span>
               </div>
             </div>

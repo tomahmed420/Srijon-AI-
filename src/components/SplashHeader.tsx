@@ -23,7 +23,7 @@ export default function SplashHeader({
               <span>{language === "bn" ? "সৃজন" : "Srijon"}</span>
               <span className="text-[10px] tracking-wide px-1.5 py-0.2 rounded bg-amber-700/10 text-amber-805 font-bold">AI</span>
               <span className="hidden md:inline-block text-xs text-amber-850/70 font-normal font-sans">
-                — {language === "bn" ? "বাংলা কবিতা জেনারেটর ও বাংলা AI" : "Bengali Poetry Generator & Bengali AI Writer"}
+                — {language === "bn" ? "বাংলা কবিতা এআই ও বাংলা লেখা টুলস বাংলাদেশ" : "Bengali Poetry Generator & Bengali AI Writer"}
               </span>
             </h1>
           </div>
