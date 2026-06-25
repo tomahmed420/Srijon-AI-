@@ -4,7 +4,31 @@ import PoetLounge from "./components/PoetLounge";
 import { Sparkles, Heart } from "lucide-react";
 
 export default function App() {
-  const [language, setLanguage] = useState<"bn" | "en">("bn");
+  const [language, setLanguage] = useState<"bn" | "en">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const langParam = params.get("lang");
+      if (langParam === "en" || langParam === "bn") {
+        return langParam;
+      }
+      const stored = localStorage.getItem("srijon_lang");
+      if (stored === "en" || stored === "bn") {
+        return stored;
+      }
+    }
+    return "bn";
+  });
+
+  const handleSetLanguage = (lang: "bn" | "en") => {
+    setLanguage(lang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("srijon_lang", lang);
+      const params = new URLSearchParams(window.location.search);
+      params.set("lang", lang);
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f1ebd9] text-[#3d2712] flex flex-col justify-between selection:bg-amber-800/15 selection:text-[#3d2712] transition-all duration-300">
@@ -12,7 +36,7 @@ export default function App() {
       {/* Dynamic Splash Navigation Header */}
       <SplashHeader
         language={language}
-        setLanguage={setLanguage}
+        setLanguage={handleSetLanguage}
       />
 
       {/* Main Tab Dashboard Container */}
