@@ -1,0 +1,16 @@
+{
+  "name": "সৃজন AI (Srijon AI Bangladesh) — বাংলা কবিতা এআই",
+  "short_name": "سৃজন AI",
+  "description": "বাংলাদেশের জনপ্রিয়তম বাংলা কবিতা এআই এবং সর্বশ্রেষ্ঠ বাংলা লেখা টুলস সমৃদ্ধ সৃজন এআই বাংলাদেশ পোর্টাল।",
+  "start_url": "/?lang=bn&utm_source=pwa",
+  "display": "standalone",
+  "background_color": "#f1ebd9",
+  "theme_color": "#3d2712",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233d2712'/><text y='75' x='10' font-size='70'>🪶</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
