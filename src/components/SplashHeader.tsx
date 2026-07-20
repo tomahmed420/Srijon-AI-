@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, Languages, Moon, Sun } from "lucide-react";
+import { Languages, Moon, Sun, Feather } from "lucide-react";
 
 interface SplashHeaderProps {
   language: "bn" | "en";
@@ -20,7 +20,7 @@ export default function SplashHeader({
         {/* Poetic Branding */}
         <div className="flex items-center space-x-2">
           <div className="p-1.5 rounded-lg bg-amber-800/5 dark:bg-amber-100/10 text-amber-800 dark:text-amber-300 flex items-center justify-center">
-            <Sparkles className="w-4.5 h-4.5 text-amber-700 dark:text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+            <Feather className="w-4.5 h-4.5 text-amber-700 dark:text-amber-400 -rotate-12" />
           </div>
           <div className="text-left">
             <h1 className="text-base sm:text-lg font-serif font-bold tracking-tight text-[#3d2510] dark:text-amber-50 flex items-center flex-wrap gap-1.5">

@@ -668,16 +668,16 @@ I find you always by my side."`;
                 <h2 className="text-base font-serif font-bold text-[#3d2510] dark:text-amber-50">
                   {language === "bn" ? "সৃজন এআই বাংলাদেশ — বাংলা লেখা টুলস" : "Srijon Creative Desk — Bengali AI Writer"}
                 </h2>
-                <span className="text-[11px] text-[#705e4a] font-serif block">
-                  {language === "bn" ? "বাংলা কবিতা এআই ও জেমিনি প্রযুক্তির সাহায্যে মনের শব্দ সাজান" : "Shape emotions with advanced Bengali Poetry Generator assistance"}
+                <span className="text-[11px] text-[#4a3419] dark:text-amber-200/80 font-serif block">
+                  {language === "bn" ? "মনের কথাগুলো কবিতা করে দাও" : "Turn your feelings into a poem"}
                 </span>
               </div>
             </div>
 
             {/* Input Prompt Block */}
             <div className="space-y-1.5 text-left">
-              <label className="text-[11px] uppercase tracking-wider font-bold text-[#705e4a] block font-serif">
-                {language === "bn" ? "কেন্দ্রীয় ভাবনা বা কাব্যিক রূপকল্প" : "Core Emotion or Motif"}
+              <label className="text-xs uppercase tracking-wide font-bold text-[#4a3419] dark:text-amber-200/80 block font-serif">
+                {language === "bn" ? "তোমার কবিতার বিষয়" : "What's the poem about?"}
               </label>
               <textarea
                 value={prompt}
@@ -687,7 +687,7 @@ I find you always by my side."`;
                 rows={4}
                 className="w-full text-xs sm:text-sm rounded-xl bg-white dark:bg-[#241a10] border border-[#cfc0a9] dark:border-amber-100/15 text-[#2c1a0c] dark:text-amber-50 px-3.5 py-3 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-200 transition-all resize-none leading-relaxed font-serif"
               />
-              <div className="flex items-center justify-between text-[11px] text-[#8c7b64]">
+              <div className="flex items-center justify-between text-[11px] text-[#6b5233] dark:text-amber-200/60">
                 <span className="flex items-center gap-1">
                   <Sparkle className="w-3 h-3 text-amber-700 animate-pulse" />
                   {language === "bn" ? "জেমিনি ক্রিয়েটিভ ইঞ্জিন" : "Powered by Gemini AI"}
@@ -698,11 +698,11 @@ I find you always by my side."`;
 
             {/* --- 1. ABHOH / SEASONAL AMBIANCE (আবহ ও সুর) --- */}
             <div className="space-y-2 text-left">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] uppercase tracking-wider font-bold text-[#705e4a] font-serif">
-                  {language === "bn" ? "আবহ ও সুর (Ambiance Mood)" : "Ambiance & Mood"}
+              <div className="flex items-center justify-between flex-wrap gap-y-1">
+                <label className="text-xs uppercase tracking-wide font-bold text-[#4a3419] dark:text-amber-200/80 font-serif">
+                  {language === "bn" ? "কবিতার আবহ" : "Mood of the poem"}
                 </label>
-                <span className="text-[10px] text-[#8c7b65] font-serif">{language === "bn" ? "ম্যানুয়াল বাইরে, ধ্রুপদী ভেতরে" : "Presets toggled under arrow option"}</span>
+                <span className="text-[11px] text-[#6b5233] dark:text-amber-200/60 font-serif">{language === "bn" ? "নিজে লিখো, অথবা নিচ থেকে বেছে নাও" : "Type your own, or pick one below"}</span>
               </div>
 
               {/* Outside manual writing input box */}
@@ -730,10 +730,10 @@ I find you always by my side."`;
                       style={{ backgroundColor: getActiveMoodHex() }}
                     />
                     <span className="font-semibold">
-                      {language === "bn" ? "ধ্রুপদী আবহ ও সুর নির্বাচন" : "Select Standard Preset Ambiance"}
+                      {language === "bn" ? "একটা মুড বেছে নাও" : "Pick a mood"}
                     </span>
                   </span>
-                  <div className="flex items-center gap-1 text-stone-500">
+                  <div className="flex items-center gap-1 text-[#6b5233] dark:text-amber-200/60">
                     <span className="text-[10px] italic">
                       ({customMood.trim() ? (language === "bn" ? "কাস্টম সক্রিয়" : "manual active") : (language === "bn" ? moodThemes[selectedMood]?.labelBn.split(" ")[0] : moodThemes[selectedMood]?.labelEn.split(" ")[0])})
                     </span>
@@ -743,8 +743,8 @@ I find you always by my side."`;
 
                 {isMoodDropdownOpen && (
                   <div className="mt-1.5 p-3 bg-white dark:bg-[#241a10] border border-[#decbad] dark:border-amber-100/10 rounded-xl shadow-lg space-y-1 z-30 relative max-h-[220px] overflow-y-auto">
-                    <span className="text-[10px] font-bold tracking-widest text-[#9d8975] uppercase block px-1 pb-1 border-b border-[#faf5ea]">
-                      {language === "bn" ? "ঋতুভিত্তিক আবহpresets" : "Seasonal Ambiance Presets"}
+                    <span className="text-[10px] font-bold tracking-widest text-[#8a6a42] dark:text-amber-200/50 uppercase block px-1 pb-1 border-b border-[#faf5ea]">
+                      {language === "bn" ? "ঋতুভিত্তিক মুড" : "Seasonal moods"}
                     </span>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1.5">
                       {activeMoodsList.map((item) => {
@@ -769,7 +769,7 @@ I find you always by my side."`;
                               <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: item.hex }} />
                               <span className="font-semibold">{item.label}</span>
                             </span>
-                            <span className="text-[10px] text-stone-500 truncate block font-sans">{item.desc}</span>
+                            <span className="text-[10px] text-[#6b5233] dark:text-amber-200/60 truncate block font-sans">{item.desc}</span>
                           </button>
                         );
                       })}
@@ -781,11 +781,11 @@ I find you always by my side."`;
 
             {/* --- 2. PEN Aura / POETS INFLUENCE --- */}
             <div className="space-y-2 text-left">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] uppercase tracking-wider font-bold text-[#705e4a] font-serif">
-                  {language === "bn" ? "কবি পরিচিতি বা সাহিত্যিক শৈলী (Style)" : "Writer Persona & Style Aura"}
+              <div className="flex items-center justify-between flex-wrap gap-y-1">
+                <label className="text-xs uppercase tracking-wide font-bold text-[#4a3419] dark:text-amber-200/80 font-serif">
+                  {language === "bn" ? "কার লেখার ধরনে চাও?" : "Whose style should it write in?"}
                 </label>
-                <span className="text-[10px] text-[#8c7b65] font-serif">{language === "bn" ? "ম্যানুয়াল বাইরে, কবিরা ভেতরে" : "Presets toggled under arrow option"}</span>
+                <span className="text-[11px] text-[#6b5233] dark:text-amber-200/60 font-serif">{language === "bn" ? "নিজে লিখো, অথবা নিচ থেকে বেছে নাও" : "Type your own, or pick one below"}</span>
               </div>
 
               {/* Outside manual writing input box */}
@@ -810,10 +810,10 @@ I find you always by my side."`;
                   <span className="flex items-center gap-2">
                     <Feather className="w-3.5 h-3.5 text-amber-800" />
                     <span className="font-semibold">
-                      {language === "bn" ? "বাঙালি কবি ও ধ্রুপদী ঘরানা নির্বাচন" : "Select Writer Identity Presets"}
+                      {language === "bn" ? "একজন কবি বেছে নাও" : "Pick a poet"}
                     </span>
                   </span>
-                  <div className="flex items-center gap-1 text-stone-500">
+                  <div className="flex items-center gap-1 text-[#6b5233] dark:text-amber-200/60">
                     <span className="text-[10px] italic">
                       ({customStyle.trim() ? (language === "bn" ? "কাস্টম সক্রিয়" : "manual active") : (language === "bn" ? activePresets.find(p => p.id === selectedStyle)?.label.split(" ")[0] : activePresets.find(p => p.id === selectedStyle)?.label)})
                     </span>
@@ -823,8 +823,8 @@ I find you always by my side."`;
 
                 {isStyleDropdownOpen && (
                   <div className="mt-1.5 p-3.5 bg-white dark:bg-[#241a10] border border-[#decbad] dark:border-amber-100/10 rounded-xl shadow-lg space-y-2 z-30 relative max-h-[300px] overflow-y-auto">
-                    <span className="text-[10px] font-bold tracking-widest text-[#9d8975] uppercase block pb-1 border-b border-[#faf5ea]">
-                      {language === "bn" ? "বরেণ্য বাঙালি সাহিত্যিক ঐতিহ্য" : "Legends & Poetic Identity Presets"}
+                    <span className="text-[10px] font-bold tracking-widest text-[#8a6a42] dark:text-amber-200/50 uppercase block pb-1 border-b border-[#faf5ea]">
+                      {language === "bn" ? "জনপ্রিয় বাংলা কবিরা" : "Popular Bengali poets"}
                     </span>
                     <div className="grid grid-cols-1 gap-1.5 pt-1">
                       {activePresets.map((poet) => {
@@ -846,7 +846,7 @@ I find you always by my side."`;
                             }`}
                           >
                             <span className="font-semibold">{poet.label}</span>
-                            <span className="text-[10px] text-stone-500 italic block font-sans">{poet.subtitle}</span>
+                            <span className="text-[10px] text-[#6b5233] dark:text-amber-200/60 italic block font-sans">{poet.subtitle}</span>
                           </button>
                         );
                       })}
@@ -930,7 +930,7 @@ I find you always by my side."`;
                         <h4 className="text-xs font-bold text-[#3d2510] dark:text-amber-100 group-hover:text-amber-800 dark:group-hover:text-amber-400 truncate">
                           {p.title}
                         </h4>
-                        <div className="text-[10px] text-stone-500 font-sans flex items-center gap-1.5 mt-0.5">
+                        <div className="text-[10px] text-[#6b5233] dark:text-amber-200/60 font-sans flex items-center gap-1.5 mt-0.5">
                           <span className="text-amber-800 font-bold capitalize truncate max-w-[120px]">
                             {presetPoetsBn.find(pp=>pp.id === p.style)?.label || p.style}
                           </span>
@@ -1074,7 +1074,7 @@ I find you always by my side."`;
                         ? (language === "bn" ? "আবৃত্তি বন্ধ" : "Pause Audio") 
                         : (language === "bn" ? "আবৃত্তি শুনুন" : "Listen")}
                     </span>
-                    <span className="text-[10px] text-[#8c7b64] block shrink max-w-[80px] truncate leading-none">
+                    <span className="text-[10px] text-[#6b5233] dark:text-amber-200/60 block shrink max-w-[80px] truncate leading-none">
                       {selectedVoiceName ? selectedVoiceName.split(" ")[0] : (language === "bn" ? "কণ্ঠস্বর" : "Default voice")}
                     </span>
                   </div>
@@ -1101,7 +1101,7 @@ I find you always by my side."`;
                     <span className="text-[10px] font-serif font-bold text-amber-900 block leading-tight">
                       {bookmarkSuccess ? (language === "bn" ? "রাখা হয়েছে" : "Saved!") : (language === "bn" ? "সংরক্ষণ" : "Save Draft")}
                     </span>
-                    <span className="text-[10px] text-[#8c7b64] block leading-none">
+                    <span className="text-[10px] text-[#6b5233] dark:text-amber-200/60 block leading-none">
                       {language === "bn" ? "লোকাল খাতা" : "In your notebook"}
                     </span>
                   </div>
@@ -1125,7 +1125,7 @@ I find you always by my side."`;
                     <span className="text-[10px] font-serif font-bold text-amber-900 block leading-tight">
                       {language === "bn" ? "ডাউনলোড" : "Download"}
                     </span>
-                    <span className="text-[10px] text-[#8c7b64] block leading-none">
+                    <span className="text-[10px] text-[#6b5233] dark:text-amber-200/60 block leading-none">
                       {language === "bn" ? "১১০০px কার্ড" : "1100px PNG card"}
                     </span>
                   </div>
@@ -1152,7 +1152,7 @@ I find you always by my side."`;
                     <span className="text-[10px] font-serif font-bold text-amber-900 block leading-tight">
                       {copied ? (language === "bn" ? "অনুলিপি" : "Copied!") : (language === "bn" ? "শেয়ার" : "Copy Shared")}
                     </span>
-                    <span className="text-[10px] text-[#8c7b64] block leading-none">
+                    <span className="text-[10px] text-[#6b5233] dark:text-amber-200/60 block leading-none">
                       {language === "bn" ? "ক্লিপবোর্ড" : "Ready to paste"}
                     </span>
                   </div>
