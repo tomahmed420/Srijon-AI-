@@ -57,10 +57,13 @@ const rateLimitMiddleware = (req: express.Request, res: express.Response, next: 
   const requestLanguage = req.body?.language === "en" ? "en" : "bn";
 
   if (!rateInfo || now > rateInfo.resetTime) {
+    const resetTime = now + limitWindow;
     ipRateLimits.set(ip, {
       count: 1,
-      resetTime: now + limitWindow,
+      resetTime,
     });
+    res.setHeader("X-RateLimit-Remaining", String(maxRequests - 1));
+    res.setHeader("X-RateLimit-Reset", String(resetTime));
     return next();
   }
 
@@ -69,10 +72,14 @@ const rateLimitMiddleware = (req: express.Request, res: express.Response, next: 
     const message = requestLanguage === "bn"
       ? `একটু হাঁপ ছেড়ে নিন কবি — ${timeLeft} সেকেন্ড পরে আবার লিখুন।`
       : `Catch your breath for ${timeLeft}s before writing the next one.`;
+    res.setHeader("X-RateLimit-Remaining", "0");
+    res.setHeader("X-RateLimit-Reset", String(rateInfo.resetTime));
     return res.status(429).json({ error: message });
   }
 
   rateInfo.count += 1;
+  res.setHeader("X-RateLimit-Remaining", String(Math.max(0, maxRequests - rateInfo.count)));
+  res.setHeader("X-RateLimit-Reset", String(rateInfo.resetTime));
   next();
 };
 
@@ -112,6 +119,51 @@ class RequestQueue {
   }
 }
 const geminiQueue = new RequestQueue();
+
+// --- 2b. LIGHTWEIGHT RATE LIMITER FOR RECITATION (separate quota from poem generation) ---
+const ttsRateLimits = new Map<string, RateLimitInfo>();
+const ttsRateLimitMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const ip = (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "127.0.0.1";
+  const now = Date.now();
+  const limitWindow = 60 * 1000;
+  const maxRequests = 8;
+
+  const rateInfo = ttsRateLimits.get(ip);
+  if (!rateInfo || now > rateInfo.resetTime) {
+    ttsRateLimits.set(ip, { count: 1, resetTime: now + limitWindow });
+    return next();
+  }
+  if (rateInfo.count >= maxRequests) {
+    const timeLeft = Math.ceil((rateInfo.resetTime - now) / 1000);
+    return res.status(429).json({ error: `Please wait ${timeLeft}s before reciting again.` });
+  }
+  rateInfo.count += 1;
+  next();
+};
+
+// Wraps raw 16-bit PCM audio (as returned by Gemini TTS) in a standard WAV container so browsers can play it directly
+function pcmToWav(pcmBuffer: Buffer, sampleRate = 24000, channels = 1, bitsPerSample = 16): Buffer {
+  const byteRate = sampleRate * channels * (bitsPerSample / 8);
+  const blockAlign = channels * (bitsPerSample / 8);
+  const dataSize = pcmBuffer.length;
+  const header = Buffer.alloc(44);
+
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + dataSize, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16); // fmt chunk size
+  header.writeUInt16LE(1, 20); // PCM format
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write("data", 36);
+  header.writeUInt32LE(dataSize, 40);
+
+  return Buffer.concat([header, pcmBuffer]);
+}
 
 // --- 3. POETRY GENERATION ROUTE ---
 app.post("/api/generate-poetry", rateLimitMiddleware, async (req, res) => {
@@ -181,9 +233,16 @@ Mood of the poem: ${mood}.
 The language must be strictly: ${language === "bn" ? "Bengali (বাংলা)" : "English"}.
 Tracking seed: ${randomSalt}`;
 
-    // Processing poetry request securely inside the concurrency Queue
-    const poemResult = await geminiQueue.add(async () => {
-      const response = await client.models.generateContent({
+    // Streaming poetry generation: tokens are pushed to the client the moment Gemini produces them
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+
+    let fullText = "";
+
+    await geminiQueue.add(async () => {
+      const stream = await client.models.generateContentStream({
         model: "gemini-3.5-flash",
         contents: `Compose an entirely original, fresh poem or lyrical lines about: "${prompt || "Untitled Essence"}".
 Dynamic variation parameter: ${randomSalt}`,
@@ -192,13 +251,81 @@ Dynamic variation parameter: ${randomSalt}`,
           temperature: 1.0, // Maximum dynamic variation without deterministic presets
         },
       });
-      return response;
+
+      for await (const chunk of stream) {
+        const piece = chunk.text || "";
+        if (piece) {
+          fullText += piece;
+          res.write(`data: ${JSON.stringify({ delta: piece })}\n\n`);
+        }
+      }
     });
 
-    res.json({ text: poemResult.text });
+    res.write(`data: ${JSON.stringify({ done: true, text: fullText })}\n\n`);
+    res.end();
   } catch (error: any) {
     console.error("Poetry Generation Error:", error);
-    res.status(500).json({ error: error.message || "An error occurred while generating poetry." });
+    if (res.headersSent) {
+      // Streaming had already started — deliver the error as an SSE event instead of a fresh JSON response
+      res.write(`data: ${JSON.stringify({ error: error.message || "An error occurred while generating poetry." })}\n\n`);
+      res.end();
+    } else {
+      res.status(500).json({ error: error.message || "An error occurred while generating poetry." });
+    }
+  }
+});
+
+// --- 4. RECITATION (TEXT-TO-SPEECH) ROUTE ---
+// Uses Gemini's native TTS model for natural, human-like recitation instead of the browser's robotic
+// built-in speechSynthesis. Falls back gracefully on the client if this ever fails.
+app.post("/api/recite-poetry", ttsRateLimitMiddleware, async (req, res) => {
+  try {
+    const { text, language, voice } = req.body as { text?: string; language?: string; voice?: string };
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "No text provided to recite." });
+    }
+
+    const client = getAiClient();
+    const voiceName = voice === "Charon" ? "Charon" : "Kore";
+
+    const cleanText = text
+      .replace(/[*#_~`\[\]]/g, " ")
+      .replace(/[-]{2,}/g, " ")
+      .trim()
+      .slice(0, 900); // keep recitation requests reasonably sized
+
+    const styleInstruction = language === "bn"
+      ? `শান্ত, আবেগঘন ও কাব্যিক ভঙ্গিতে বাংলায় আবৃত্তি করো: `
+      : `Recite gently and warmly, like a heartfelt poetry reading: `;
+
+    const response = await geminiQueue.add(async () => {
+      return client.models.generateContent({
+        model: "gemini-3.1-flash-tts-preview",
+        contents: `${styleInstruction}${cleanText}`,
+        config: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName },
+            },
+          },
+        },
+      });
+    });
+
+    const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!audioData) {
+      throw new Error("The recitation engine did not return any audio.");
+    }
+
+    const pcmBuffer = Buffer.from(audioData, "base64");
+    const wavBuffer = pcmToWav(pcmBuffer);
+
+    res.setHeader("Content-Type", "audio/wav");
+    res.send(wavBuffer);
+  } catch (error: any) {
+    console.error("Recitation Error:", error);
+    res.status(500).json({ error: error.message || "Could not generate recitation audio." });
   }
 });
 
