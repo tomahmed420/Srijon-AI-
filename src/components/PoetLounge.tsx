@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Sprout, User, Search, Volume2, Bookmark, Download, Share2, 
   ChevronUp, ChevronDown, Feather, Trash2, Languages, Sparkles, 
@@ -50,6 +51,33 @@ I find you always by my side."`;
   const [copied, setCopied] = useState(false);
   const [bookmarkSuccess, setBookmarkSuccess] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
+
+  // Typewriter-style progressive reveal so a freshly generated poem feels like it's being written live
+  const [displayText, setDisplayText] = useState(poemText);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const revealTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (revealTimerRef.current) window.clearInterval(revealTimerRef.current);
+
+    const characters = Array.from(poemText);
+    let index = 0;
+    setDisplayText("");
+    setIsRevealing(true);
+
+    revealTimerRef.current = window.setInterval(() => {
+      index += 2; // reveal a couple of characters per tick for a natural writing pace
+      setDisplayText(characters.slice(0, index).join(""));
+      if (index >= characters.length) {
+        if (revealTimerRef.current) window.clearInterval(revealTimerRef.current);
+        setIsRevealing(false);
+      }
+    }, 16);
+
+    return () => {
+      if (revealTimerRef.current) window.clearInterval(revealTimerRef.current);
+    };
+  }, [poemText]);
 
   // Responsive active view state (for mobile, preserving draft perfectly)
   const [activeMobileTab, setActiveMobileTab] = useState<"write" | "preview">("write");
@@ -379,7 +407,7 @@ I find you always by my side."`;
       setActiveMobileTab("preview");
     } catch (err: any) {
       console.error(err);
-      setErrorStatus(err.message || (language === "bn" ? "সংযোগ করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।" : "Server timeout error. Please retry again."));
+      setErrorStatus(err.message || (language === "bn" ? "সংযোগ করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।" : "Something went wrong on our end. Let's try that again."));
     } finally {
       setLoading(false);
     }
@@ -584,7 +612,7 @@ I find you always by my side."`;
   };
 
   return (
-    <div className="min-h-[calc(100vh-120px)] w-full py-6 px-4 md:py-10 md:px-8 bg-[#faf7f0] relative overflow-hidden transition-all duration-500">
+    <div className="min-h-[calc(100dvh-120px)] w-full py-6 px-4 md:py-10 md:px-8 bg-[#faf7f0] dark:bg-[#120c06] relative overflow-hidden transition-colors duration-500">
       
       {/* Exquisite Natural Ambient Backdrop Glow corresponding to chosen mood of selection */}
       <div 
@@ -598,46 +626,46 @@ I find you always by my side."`;
       <div className="max-w-7xl mx-auto relative z-10">
         
         {/* Responsive view switcher bar on mobile ONLY */}
-        <div className="flex sm:hidden bg-[#eae3d0] p-1 rounded-xl w-full max-w-sm mx-auto mb-6 relative">
+        <div className="flex sm:hidden bg-[#eae3d0] dark:bg-[#1c130a] p-1 rounded-xl w-full max-w-sm mx-auto mb-6 relative">
           <button
             onClick={() => setActiveMobileTab("write")}
             className={`flex-1 py-2 text-xs font-serif font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeMobileTab === "write" 
-                ? "bg-[#faf7f0] text-amber-950 shadow-sm" 
-                : "text-[#5e4b37] hover:text-[#3d2510]"
+                ? "bg-[#faf7f0] dark:bg-[#241a10] text-amber-950 dark:text-amber-100 shadow-sm" 
+                : "text-[#5e4b37] dark:text-amber-200/50 hover:text-[#3d2510] dark:hover:text-amber-100"
             }`}
           >
-            <PenTool className="w-3.5 h-3.5 text-amber-850" />
+            <PenTool className="w-3.5 h-3.5 text-amber-900" />
             <span>{language === "bn" ? "শব্দকুঞ্জ লেখনী" : "Writing Desk"}</span>
           </button>
           <button
             onClick={() => setActiveMobileTab("preview")}
             className={`flex-1 py-2 text-xs font-serif font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeMobileTab === "preview" 
-                ? "bg-[#faf7f0] text-amber-950 shadow-sm" 
-                : "text-[#5e4b37] hover:text-[#3d2510]"
+                ? "bg-[#faf7f0] dark:bg-[#241a10] text-amber-950 dark:text-amber-100 shadow-sm" 
+                : "text-[#5e4b37] dark:text-amber-200/50 hover:text-[#3d2510] dark:hover:text-amber-100"
             }`}
           >
-            <Eye className="w-3.5 h-3.5 text-amber-850" />
+            <Eye className="w-3.5 h-3.5 text-amber-900" />
             <span>{language === "bn" ? "কাব্যের ক্যানভাস" : "Poem Card"}</span>
           </button>
         </div>
 
         {/* Dynamic Dual split panels layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-start">
           
           {/* ================= LEFT COLUMN: WRITING RETREAT DESK ================= */}
-          <div className={`lg:col-span-5 bg-[#FCFAF5] rounded-3xl border border-[#decbad]/60 p-5 md:p-7 shadow-sm space-y-6 ${
+          <div className={`lg:col-span-5 bg-[#FCFAF5] dark:bg-[#1c130a] rounded-3xl border border-[#decbad]/60 dark:border-amber-100/10 p-5 md:p-7 shadow-sm space-y-6 {
             activeMobileTab === "preview" ? "hidden sm:block" : "block"
           }`}>
             
             {/* Box Header */}
-            <div className="flex items-center space-x-3 pb-3.5 border-b border-[#eae1ca]/80">
-              <div className="p-2 rounded-xl bg-amber-805/10 text-amber-800">
+            <div className="flex items-center space-x-3 pb-3.5 border-b border-[#eae1ca]/80 dark:border-amber-100/10">
+              <div className="p-2 rounded-xl bg-amber-800/10 text-amber-800">
                 <Feather className="w-4.5 h-4.5 text-amber-700 font-bold" />
               </div>
               <div className="text-left">
-                <h2 className="text-base font-serif font-bold text-[#3d2510]">
+                <h2 className="text-base font-serif font-bold text-[#3d2510] dark:text-amber-50">
                   {language === "bn" ? "সৃজন এআই বাংলাদেশ — বাংলা লেখা টুলস" : "Srijon Creative Desk — Bengali AI Writer"}
                 </h2>
                 <span className="text-[11px] text-[#705e4a] font-serif block">
@@ -657,11 +685,11 @@ I find you always by my side."`;
                 placeholder={language === "bn" ? "বর্ষার নিঝুম রাতে কফি, মেঘ ছুঁয়ে যাওয়া কোনো স্মৃতি, ফেলে আসা চিঠি..." : "Write a theme like rain over misty train tracks, late nights over hot tea, fading memories..."}
                 maxLength={200}
                 rows={4}
-                className="w-full text-xs sm:text-sm rounded-xl bg-white border border-[#cfc0a9] text-[#2c1a0c] px-3.5 py-3 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-200 transition-all resize-none leading-relaxed font-serif"
+                className="w-full text-xs sm:text-sm rounded-xl bg-white dark:bg-[#241a10] border border-[#cfc0a9] dark:border-amber-100/15 text-[#2c1a0c] dark:text-amber-50 px-3.5 py-3 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-200 transition-all resize-none leading-relaxed font-serif"
               />
               <div className="flex items-center justify-between text-[11px] text-[#8c7b64]">
                 <span className="flex items-center gap-1">
-                  <Sparkle className="w-3 h-3 text-amber-80 * animate-pulse" />
+                  <Sparkle className="w-3 h-3 text-amber-700 animate-pulse" />
                   {language === "bn" ? "জেমিনি ক্রিয়েটিভ ইঞ্জিন" : "Powered by Gemini AI"}
                 </span>
                 <span>{prompt.length}/200</span>
@@ -674,7 +702,7 @@ I find you always by my side."`;
                 <label className="text-[11px] uppercase tracking-wider font-bold text-[#705e4a] font-serif">
                   {language === "bn" ? "আবহ ও সুর (Ambiance Mood)" : "Ambiance & Mood"}
                 </label>
-                <span className="text-[9px] text-[#8c7b65] font-serif">{language === "bn" ? "ম্যানুয়াল বাইরে, ধ্রুপদী ভেতরে" : "Presets toggled under arrow option"}</span>
+                <span className="text-[10px] text-[#8c7b65] font-serif">{language === "bn" ? "ম্যানুয়াল বাইরে, ধ্রুপদী ভেতরে" : "Presets toggled under arrow option"}</span>
               </div>
 
               {/* Outside manual writing input box */}
@@ -686,7 +714,7 @@ I find you always by my side."`;
                   stopRecitation();
                 }}
                 placeholder={language === "bn" ? "কাস্টম আবহ লিখুন (যেমন: একাকী বিষণ্ণতা, চায়ের সুবাস...)" : "Or describe any custom mood here manually..."}
-                className="w-full text-xs rounded-xl bg-white border border-[#cfc0a9] text-[#2c1a0c] px-3 py-2.5 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-200 transition-all font-serif"
+                className="w-full text-xs rounded-xl bg-white dark:bg-[#241a10] border border-[#cfc0a9] dark:border-amber-100/15 text-[#2c1a0c] dark:text-amber-50 px-3 py-2.5 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-200 transition-all font-serif"
               />
 
               {/* Accordion Toggle containing presets */}
@@ -694,7 +722,7 @@ I find you always by my side."`;
                 <button
                   type="button"
                   onClick={() => setIsMoodDropdownOpen(!isMoodDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 bg-amber-800/5 hover:bg-amber-850/10 border border-[#decbad] rounded-xl text-xs font-serif text-[#4e361d] transition-all cursor-pointer"
+                  className="w-full flex items-center justify-between px-3 py-2.5 bg-amber-800/5 dark:bg-amber-100/5 hover:bg-amber-900/10 dark:hover:bg-amber-100/10 border border-[#decbad] dark:border-amber-100/10 rounded-xl text-xs font-serif text-[#4e361d] dark:text-amber-200 transition-all cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
                     <span 
@@ -714,7 +742,7 @@ I find you always by my side."`;
                 </button>
 
                 {isMoodDropdownOpen && (
-                  <div className="mt-1.5 p-3 bg-white border border-[#decbad] rounded-xl shadow-lg space-y-1 z-30 relative max-h-[220px] overflow-y-auto">
+                  <div className="mt-1.5 p-3 bg-white dark:bg-[#241a10] border border-[#decbad] dark:border-amber-100/10 rounded-xl shadow-lg space-y-1 z-30 relative max-h-[220px] overflow-y-auto">
                     <span className="text-[10px] font-bold tracking-widest text-[#9d8975] uppercase block px-1 pb-1 border-b border-[#faf5ea]">
                       {language === "bn" ? "ঋতুভিত্তিক আবহpresets" : "Seasonal Ambiance Presets"}
                     </span>
@@ -741,7 +769,7 @@ I find you always by my side."`;
                               <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: item.hex }} />
                               <span className="font-semibold">{item.label}</span>
                             </span>
-                            <span className="text-[9px] text-stone-500 truncate block font-sans">{item.desc}</span>
+                            <span className="text-[10px] text-stone-500 truncate block font-sans">{item.desc}</span>
                           </button>
                         );
                       })}
@@ -757,7 +785,7 @@ I find you always by my side."`;
                 <label className="text-[11px] uppercase tracking-wider font-bold text-[#705e4a] font-serif">
                   {language === "bn" ? "কবি পরিচিতি বা সাহিত্যিক শৈলী (Style)" : "Writer Persona & Style Aura"}
                 </label>
-                <span className="text-[9px] text-[#8c7b65] font-serif">{language === "bn" ? "ম্যানুয়াল বাইরে, কবিরা ভেতরে" : "Presets toggled under arrow option"}</span>
+                <span className="text-[10px] text-[#8c7b65] font-serif">{language === "bn" ? "ম্যানুয়াল বাইরে, কবিরা ভেতরে" : "Presets toggled under arrow option"}</span>
               </div>
 
               {/* Outside manual writing input box */}
@@ -769,7 +797,7 @@ I find you always by my side."`;
                   stopRecitation();
                 }}
                 placeholder={language === "bn" ? "কাস্টম স্টাইল বা নিজের নাম লিখুন (যেমন: কঙ্কাবতী, আধুনিক মুক্তক...)" : "Or describe any custom style / author name directly..."}
-                className="w-full text-xs rounded-xl bg-white border border-[#cfc0a9] text-[#2c1a0c] px-3 py-2.5 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-200 transition-all font-serif"
+                className="w-full text-xs rounded-xl bg-white dark:bg-[#241a10] border border-[#cfc0a9] dark:border-amber-100/15 text-[#2c1a0c] dark:text-amber-50 px-3 py-2.5 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-200 transition-all font-serif"
               />
 
               {/* Accordion toggle containing presets */}
@@ -777,7 +805,7 @@ I find you always by my side."`;
                 <button
                   type="button"
                   onClick={() => setIsStyleDropdownOpen(!isStyleDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 bg-amber-800/5 hover:bg-amber-850/10 border border-[#decbad] rounded-xl text-xs font-serif text-[#4e361d] transition-all cursor-pointer"
+                  className="w-full flex items-center justify-between px-3 py-2.5 bg-amber-800/5 dark:bg-amber-100/5 hover:bg-amber-900/10 dark:hover:bg-amber-100/10 border border-[#decbad] dark:border-amber-100/10 rounded-xl text-xs font-serif text-[#4e361d] dark:text-amber-200 transition-all cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
                     <Feather className="w-3.5 h-3.5 text-amber-800" />
@@ -794,7 +822,7 @@ I find you always by my side."`;
                 </button>
 
                 {isStyleDropdownOpen && (
-                  <div className="mt-1.5 p-3.5 bg-white border border-[#decbad] rounded-xl shadow-lg space-y-2 z-30 relative max-h-[300px] overflow-y-auto">
+                  <div className="mt-1.5 p-3.5 bg-white dark:bg-[#241a10] border border-[#decbad] dark:border-amber-100/10 rounded-xl shadow-lg space-y-2 z-30 relative max-h-[300px] overflow-y-auto">
                     <span className="text-[10px] font-bold tracking-widest text-[#9d8975] uppercase block pb-1 border-b border-[#faf5ea]">
                       {language === "bn" ? "বরেণ্য বাঙালি সাহিত্যিক ঐতিহ্য" : "Legends & Poetic Identity Presets"}
                     </span>
@@ -856,9 +884,9 @@ I find you always by my side."`;
 
             {/* Notebook Saved Archive Collections within Writing Desk */}
             {savedPoems.length > 0 && (
-              <div className="border-t border-[#eae1ca] pt-5 space-y-3 font-serif text-left">
+              <div className="border-t border-[#eae1ca] dark:border-amber-100/10 pt-5 space-y-3 font-serif text-left">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-[#3d2510]">
+                  <div className="flex items-center gap-1.5 text-[#3d2510] dark:text-amber-100">
                     <BookOpen className="w-4 h-4 text-amber-800" />
                     <h3 className="text-xs font-bold font-serif">
                       {language === "bn" ? "ব্যক্তিগত কবিতা খাতা" : "My Poetry Notebook"}
@@ -899,10 +927,10 @@ I find you always by my side."`;
                       className="p-3 rounded-xl border border-[#e6dec9]/80 bg-white/50 hover:bg-[#faf6ee] transition-all flex items-center justify-between gap-3 cursor-pointer group"
                     >
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-bold text-[#3d2510] group-hover:text-amber-800 truncate">
+                        <h4 className="text-xs font-bold text-[#3d2510] dark:text-amber-100 group-hover:text-amber-800 dark:group-hover:text-amber-400 truncate">
                           {p.title}
                         </h4>
-                        <div className="text-[9px] text-stone-500 font-sans flex items-center gap-1.5 mt-0.5">
+                        <div className="text-[10px] text-stone-500 font-sans flex items-center gap-1.5 mt-0.5">
                           <span className="text-amber-800 font-bold capitalize truncate max-w-[120px]">
                             {presetPoetsBn.find(pp=>pp.id === p.style)?.label || p.style}
                           </span>
@@ -931,10 +959,28 @@ I find you always by my side."`;
           }`}>
             
             {/* NO ARTIFICIAL IPHONE BODY OVERLAYS! NATURE DESK CANVAS EMBLEMS */}
-            <div className="w-full max-w-2xl bg-[#FCFAF5] sm:bg-[#faf7ee]/30 sm:border border-[#e6dec9]/40 sm:p-6 rounded-[36px] flex flex-col relative">
+            <div className="w-full max-w-2xl bg-[#FCFAF5] dark:bg-[#1c130a] sm:bg-[#faf7ee]/30 dark:sm:bg-[#1c130a]/50 sm:border border-[#e6dec9]/40 dark:border-amber-100/10 sm:p-6 rounded-[36px] flex flex-col relative">
               
               {/* Parchment Vellum Styled Poetry Sheet */}
-              <div className="w-full bg-[#fdfaf2] border border-[#e3d1b8] rounded-2xl p-6 sm:p-10 shadow-lg relative leading-relaxed tracking-wide transition-all min-h-[380px] flex flex-col justify-between">
+              <div className="w-full bg-[#fdfaf2] dark:bg-[#20160c] border border-[#e3d1b8] dark:border-amber-100/10 rounded-2xl p-6 sm:p-10 shadow-lg relative leading-relaxed tracking-wide transition-colors min-h-[380px] flex flex-col justify-between overflow-hidden">
+
+                {/* Shimmer overlay while the poem is being composed */}
+                {loading && (
+                  <div className="absolute inset-0 z-20 bg-[#fdfaf2]/90 dark:bg-[#20160c]/90 backdrop-blur-[1px] flex flex-col items-center justify-center gap-3 px-10">
+                    <div className="w-full max-w-xs space-y-3">
+                      {[80, 60, 90, 45].map((widthPct, i) => (
+                        <div
+                          key={i}
+                          className="h-3 rounded-full bg-gradient-to-r from-amber-900/5 via-amber-800/15 to-amber-900/5 bg-[length:200%_100%] animate-[shimmer_1.6s_ease-in-out_infinite]"
+                          style={{ width: `${widthPct}%`, marginLeft: i % 2 === 0 ? 0 : "auto", marginRight: i % 2 === 0 ? "auto" : 0 }}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[11px] font-serif italic text-amber-900/60 pt-2">
+                      {language === "bn" ? "কলম চলছে, একটু অপেক্ষা করুন..." : "The pen is moving, one line at a time..."}
+                    </span>
+                  </div>
+                )}
                 
                 {/* Vintage Corner Embellishments */}
                 <span className="absolute top-4 left-4 text-xs opacity-15 select-none text-amber-900 font-serif">❦</span>
@@ -954,12 +1000,19 @@ I find you always by my side."`;
                     <span>❦</span>
                   </div>
 
-                  <p 
-                    className="text-amber-950 whitespace-pre-wrap leading-relaxed tracking-wide antialiased select-text font-medium text-center focus:outline-none transition-all w-full max-w-lg"
-                    style={{ fontSize: `${fontSize}px` }}
-                  >
-                    {poemText}
-                  </p>
+                  <AnimatePresence mode="wait">
+                    <motion.p 
+                      key={poemText}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                      className="text-amber-950 dark:text-amber-50 whitespace-pre-wrap leading-relaxed tracking-wide antialiased select-text font-medium text-center focus:outline-none w-full max-w-lg"
+                      style={{ fontSize: `${fontSize}px` }}
+                    >
+                      {displayText}
+                      {isRevealing && <span className="inline-block w-[2px] h-[1em] -mb-0.5 bg-amber-800/60 animate-pulse ml-0.5" />}
+                    </motion.p>
+                  </AnimatePresence>
                   
                   {/* Dynamic Signature of Author */}
                   <div className="w-full max-w-xs mt-8 pt-4 border-t border-amber-900/10 text-right select-none pr-4">
@@ -984,7 +1037,7 @@ I find you always by my side."`;
                       max="32"
                       value={fontSize}
                       onChange={(e) => setFontSize(parseInt(e.target.value))}
-                      className="accent-[#875a13] h-1 w-24 sm:w-32 rounded bg-[#eae3d0] cursor-pointer"
+                      className="accent-[#875a13] h-1 w-24 sm:w-32 rounded bg-[#eae3d0] dark:bg-[#1c130a] cursor-pointer"
                     />
                     <span className="text-[10px]">A+</span>
                     <span className="bg-amber-800/10 px-1.5 py-0.5 rounded text-[10px] text-amber-900">{fontSize}pt</span>
@@ -994,7 +1047,7 @@ I find you always by my side."`;
               </div>
 
               {/* FLOATING ACTION GLASS CONSOLE DIRECTLY BELOW CANVAS */}
-              <div className="w-full mt-6 bg-[#FCFAF5] sm:bg-white/80 border border-[#decbad] rounded-2xl p-4 flex flex-wrap gap-4 items-center justify-around shadow-md select-none">
+              <div className="w-full mt-6 bg-[#FCFAF5] dark:bg-[#1c130a] sm:bg-white/80 dark:sm:bg-[#1c130a]/80 border border-[#decbad] dark:border-amber-100/10 rounded-2xl p-4 flex flex-wrap gap-4 items-center justify-around shadow-md select-none">
                 
                 {/* 1. Recitation Voice Switch */}
                 <div className="flex items-center space-x-1.5">
@@ -1011,7 +1064,7 @@ I find you always by my side."`;
                         ? "bg-[#C45E20] text-white animate-pulse"
                         : "bg-[#FAF5EA] hover:bg-[#f3ead3] text-[#7A4B24] border border-[#DECBAD]"
                     }`}
-                    title={language === "bn" ? "কবিতা আবৃত্তি" : "Recite Poem Synthesizer"}
+                    title={language === "bn" ? "কবিতা আবৃত্তি" : "Listen to your poem"}
                   >
                     <Volume2 className="w-4 sm:w-4.5 h-4 sm:h-4.5" />
                   </button>
@@ -1019,9 +1072,9 @@ I find you always by my side."`;
                     <span className="text-[10px] font-serif font-bold text-amber-900 block leading-tight">
                       {isPlayingAudio && !isAudioPaused 
                         ? (language === "bn" ? "আবৃত্তি বন্ধ" : "Pause Audio") 
-                        : (language === "bn" ? "আবৃত্তি শুনুন" : "Hear Recite")}
+                        : (language === "bn" ? "আবৃত্তি শুনুন" : "Listen")}
                     </span>
-                    <span className="text-[9px] text-[#8c7b64] block shrink max-w-[80px] truncate leading-none">
+                    <span className="text-[10px] text-[#8c7b64] block shrink max-w-[80px] truncate leading-none">
                       {selectedVoiceName ? selectedVoiceName.split(" ")[0] : (language === "bn" ? "কণ্ঠস্বর" : "Default voice")}
                     </span>
                   </div>
@@ -1033,7 +1086,7 @@ I find you always by my side."`;
                     onClick={handleSavePoem}
                     className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                       bookmarkSuccess 
-                        ? "bg-green-750 text-white" 
+                        ? "bg-green-700 text-white" 
                         : "bg-[#FAF5EA] hover:bg-[#f3ead3] text-[#7A4B24] border border-[#DECBAD]"
                     }`}
                     title={language === "bn" ? "কবিতা খাতায় রাখুন" : "Save in notebook collections"}
@@ -1048,8 +1101,8 @@ I find you always by my side."`;
                     <span className="text-[10px] font-serif font-bold text-amber-900 block leading-tight">
                       {bookmarkSuccess ? (language === "bn" ? "রাখা হয়েছে" : "Saved!") : (language === "bn" ? "সংরক্ষণ" : "Save Draft")}
                     </span>
-                    <span className="text-[9px] text-[#8c7b64] block leading-none">
-                      {language === "bn" ? "লোকাল খাতা" : "Notebook disk"}
+                    <span className="text-[10px] text-[#8c7b64] block leading-none">
+                      {language === "bn" ? "লোকাল খাতা" : "In your notebook"}
                     </span>
                   </div>
                 </div>
@@ -1072,7 +1125,7 @@ I find you always by my side."`;
                     <span className="text-[10px] font-serif font-bold text-amber-900 block leading-tight">
                       {language === "bn" ? "ডাউনলোড" : "Download"}
                     </span>
-                    <span className="text-[9px] text-[#8c7b64] block leading-none">
+                    <span className="text-[10px] text-[#8c7b64] block leading-none">
                       {language === "bn" ? "১১০০px কার্ড" : "1100px PNG card"}
                     </span>
                   </div>
@@ -1087,7 +1140,7 @@ I find you always by my side."`;
                         ? "bg-amber-900 text-white" 
                         : "bg-[#FAF5EA] hover:bg-[#f3ead3] text-[#7A4B24] border border-[#DECBAD]"
                     }`}
-                    title={language === "bn" ? "কপি ও শেয়ার" : "Copy to transfer"}
+                    title={language === "bn" ? "কপি ও শেয়ার" : "Copy & share"}
                   >
                     {copied ? (
                       <Check className="w-4 sm:w-4.5 h-4 sm:h-4.5 text-white" />
@@ -1099,8 +1152,8 @@ I find you always by my side."`;
                     <span className="text-[10px] font-serif font-bold text-amber-900 block leading-tight">
                       {copied ? (language === "bn" ? "অনুলিপি" : "Copied!") : (language === "bn" ? "শেয়ার" : "Copy Shared")}
                     </span>
-                    <span className="text-[9px] text-[#8c7b64] block leading-none">
-                      {language === "bn" ? "ক্লিপবোর্ড" : "Clipboard clipboard"}
+                    <span className="text-[10px] text-[#8c7b64] block leading-none">
+                      {language === "bn" ? "ক্লিপবোর্ড" : "Ready to paste"}
                     </span>
                   </div>
                 </div>
@@ -1111,10 +1164,10 @@ I find you always by my side."`;
 
             {/* Micro active feedback if music speech Synthesis is active */}
             {isPlayingAudio && !isAudioPaused && (
-              <div className="mt-4 flex items-center space-x-2 bg-amber-850/10 border border-amber-800/15 p-2 px-4 rounded-full select-none font-serif animate-bounce">
+              <div className="mt-4 flex items-center space-x-2 bg-amber-900/10 border border-amber-800/15 p-2 px-4 rounded-full select-none font-serif animate-bounce">
                 <span className="w-2 h-2 rounded-full bg-amber-700 animate-ping" />
                 <span className="text-[10px] text-amber-900 font-bold">
-                  {language === "bn" ? "আবৃত্তি মডিউল আবহে চমৎকার স্বর বেজে উঠছে..." : "Synthesized recitation audio wave stream active..."}
+                  {language === "bn" ? "আবৃত্তি মডিউল আবহে চমৎকার স্বর বেজে উঠছে..." : "Reciting your poem softly..."}
                 </span>
               </div>
             )}
