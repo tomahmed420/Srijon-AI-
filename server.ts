@@ -54,6 +54,7 @@ const rateLimitMiddleware = (req: express.Request, res: express.Response, next: 
   const maxRequests = 5; // Allow max 5 requests per minute per IP to prevent spam or bot attacks
 
   const rateInfo = ipRateLimits.get(ip);
+  const requestLanguage = req.body?.language === "en" ? "en" : "bn";
 
   if (!rateInfo || now > rateInfo.resetTime) {
     ipRateLimits.set(ip, {
@@ -65,9 +66,10 @@ const rateLimitMiddleware = (req: express.Request, res: express.Response, next: 
 
   if (rateInfo.count >= maxRequests) {
     const timeLeft = Math.ceil((rateInfo.resetTime - now) / 1000);
-    return res.status(429).json({
-      error: `আপনি খুব দ্রুত অনুরোধ পাঠাচ্ছেন। অনুগ্রহ করে ${timeLeft} সেকেন্ড অপেক্ষা করুন। (Rate limit exceeded. Please wait ${timeLeft}s.)`
-    });
+    const message = requestLanguage === "bn"
+      ? `একটু হাঁপ ছেড়ে নিন কবি — ${timeLeft} সেকেন্ড পরে আবার লিখুন।`
+      : `Catch your breath for ${timeLeft}s before writing the next one.`;
+    return res.status(429).json({ error: message });
   }
 
   rateInfo.count += 1;
