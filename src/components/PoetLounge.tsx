@@ -51,13 +51,32 @@ I find you always by my side."`;
   const [copied, setCopied] = useState(false);
   const [bookmarkSuccess, setBookmarkSuccess] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
+  const [rateLimitRemaining, setRateLimitRemaining] = useState<number | null>(null);
+  const [rateLimitResetIn, setRateLimitResetIn] = useState<number>(0);
 
-  // Typewriter-style progressive reveal so a freshly generated poem feels like it's being written live
+  // Ticks the rate-limit cooldown display down to zero every second
+  useEffect(() => {
+    if (rateLimitResetIn <= 0) return;
+    const timer = window.setTimeout(() => setRateLimitResetIn((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [rateLimitResetIn]);
+
+  // Typewriter-style progressive reveal so a freshly generated poem feels like it's being written live.
+  // When the poem streams in live from the API, we skip this simulated reveal (the real stream IS the reveal).
   const [displayText, setDisplayText] = useState(poemText);
   const [isRevealing, setIsRevealing] = useState(false);
   const revealTimerRef = useRef<number | null>(null);
+  const skipTypewriterRef = useRef(false);
 
   useEffect(() => {
+    if (skipTypewriterRef.current) {
+      // Poem text was already revealed live via streaming — just sync, don't replay the animation
+      skipTypewriterRef.current = false;
+      setDisplayText(poemText);
+      setIsRevealing(false);
+      return;
+    }
+
     if (revealTimerRef.current) window.clearInterval(revealTimerRef.current);
 
     const characters = Array.from(poemText);
@@ -93,6 +112,14 @@ I find you always by my side."`;
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>("");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [canvasGenerating, setCanvasGenerating] = useState(false);
+
+  // Natural, human-like recitation via Gemini TTS (falls back to the browser's built-in voice if this fails)
+  const [geminiVoice, setGeminiVoice] = useState<"Kore" | "Charon">("Kore");
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [usingFallbackVoice, setUsingFallbackVoice] = useState(false);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
+
 
   // Sync state variables depending on selected language
   useEffect(() => {
@@ -159,8 +186,8 @@ I find you always by my side."`;
 
     if (language === "bn") {
       if (isDefault) {
-        dynamicTitle = "সৃজন AI — বাংলা কবিতা এআই ও বাংলা লেখা টুলস বাংলাদেশ";
-        dynamicDesc = "সৃজন AI (সৃজন এআই বাংলাদেশ) হলো আধুনিক কৃত্রিম বুদ্ধিমত্তা সমৃদ্ধ সর্বসেরা বাংলা কবিতা এআই এবং সেরা বাংলা লেখা টুলস প্ল্যাটফর্ম। বুদ্ধিমান বাংলা ব্যাকরণ AI ও গভীর সাহিত্যিক শৈলী সম্পন্ন!";
+        dynamicTitle = "সৃজন AI — বাংলা কবিতা জেনারেটর বাংলাদেশ";
+        dynamicDesc = "সৃজন AI দিয়ে রবীন্দ্রনাথ, নজরুল, জীবনানন্দসহ প্রিয় কবিদের ধাঁচে কয়েক সেকেন্ডে নিজের কবিতা তৈরি করুন, আবৃত্তি শুনুন আর ক্যানভাস কার্ড বানিয়ে শেয়ার করুন।"
       } else {
         const topic = prompt.trim() ? `"${prompt.trim().substring(0, 18)}..."` : "কবিতা";
         dynamicTitle = `সৃজন এআই বাংলাদেশ — ${topic} — বাংলা কবিতা এআই`;
@@ -169,8 +196,8 @@ I find you always by my side."`;
       }
     } else {
       if (isDefault) {
-        dynamicTitle = "Srijon AI — Bengali Poetry Generator & Bengali AI Writer";
-        dynamicDesc = "Srijon AI (সৃজন AI) is an advanced Bengali Poetry Generator & Bengali AI Writer powered by cutting-edge Gemini models and deep Bengali Grammar AI metrics.";
+        dynamicTitle = "Srijon AI — Bengali Poetry Generator";
+        dynamicDesc = "Generate a Bengali poem in the style of Rabindranath, Nazrul, Jibanananda, and more in seconds, listen to it recited aloud, and share it as a beautiful canvas card — all free.";
       } else {
         const topic = prompt.trim() ? `"${prompt.trim().substring(0, 18)}..."` : "Poetic Verses";
         dynamicTitle = `Srijon AI — ${topic} — Bengali Poetry Generator`;
@@ -362,7 +389,37 @@ I find you always by my side."`;
 
   const currentTheme = moodThemes[selectedMood] || moodThemes.borsha;
 
-  // --- Poetry Request Dispatcher ---
+  // --- Idea Prompts: shown when the writer has no idea where to start ---
+  const examplePromptsBn = [
+    "বর্ষার নিঝুম রাতে ছাদে বসে চা খাওয়ার স্মৃতি",
+    "ছোটবেলার নদীর ঘাটে কাটানো বিকেলগুলো",
+    "প্রথম প্রেমের চিঠি যেটা কখনো পাঠানো হয়নি",
+    "মায়ের হাতের রান্নার গন্ধ মনে পড়ে যাওয়া",
+    "শহরের ব্যস্ত রাস্তায় হঠাৎ থমকে যাওয়া মুহূর্ত",
+    "দূরে চলে যাওয়া বন্ধুর জন্য অপেক্ষা",
+    "শীতের সকালে কুয়াশা মোড়া গ্রামের পথ",
+    "হারিয়ে যাওয়া দিনলিপির পাতায় লেখা কথা",
+  ];
+  const examplePromptsEn = [
+    "The smell of rain on a tin roof at midnight",
+    "An afternoon by the river as a child",
+    "A love letter that was never sent",
+    "The taste of a home-cooked meal after years away",
+    "A quiet pause in the middle of a busy city street",
+    "Waiting for a friend who moved far away",
+    "A foggy village road on a winter morning",
+    "Words found in an old, forgotten diary",
+  ];
+
+  const handleSuggestIdea = () => {
+    const list = language === "bn" ? examplePromptsBn : examplePromptsEn;
+    const remaining = list.filter((item) => item !== prompt);
+    const pool = remaining.length > 0 ? remaining : list;
+    const idea = pool[Math.floor(Math.random() * pool.length)];
+    setPrompt(idea);
+  };
+
+  // --- Poetry Request Dispatcher (consumes the live SSE stream from the server) ---
   const handleGeneratePoetry = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
@@ -385,14 +442,78 @@ I find you always by my side."`;
         }),
       });
 
+      // Surface how many requests are left in this minute, whatever the outcome
+      const remainingHeader = response.headers.get("X-RateLimit-Remaining");
+      const resetHeader = response.headers.get("X-RateLimit-Reset");
+      if (remainingHeader !== null) setRateLimitRemaining(parseInt(remainingHeader, 10));
+      if (resetHeader !== null) {
+        const secondsLeft = Math.max(0, Math.ceil((parseInt(resetHeader, 10) - Date.now()) / 1000));
+        setRateLimitResetIn(secondsLeft);
+      }
+
       if (!response.ok) {
-        const errData = await response.json();
+        const errData = await response.json().catch(() => ({} as any));
         throw new Error(errData.error || "Failed to communicate with AI.");
       }
 
-      const data = await response.json();
-      setPoemText(data.text || "");
-      
+      if (!response.body) {
+        throw new Error("Streaming is not supported in this environment.");
+      }
+
+      // Read the SSE stream and reveal the poem live as it is written, token by token
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let liveText = "";
+      let firstChunkArrived = false;
+
+      setDisplayText("");
+      setIsRevealing(true);
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || "";
+
+        for (const evt of events) {
+          const line = evt.trim();
+          if (!line.startsWith("data:")) continue;
+          const jsonStr = line.slice(5).trim();
+          if (!jsonStr) continue;
+
+          let payload: any;
+          try {
+            payload = JSON.parse(jsonStr);
+          } catch {
+            continue;
+          }
+
+          if (payload.error) {
+            throw new Error(payload.error);
+          }
+
+          if (payload.delta) {
+            if (!firstChunkArrived) {
+              firstChunkArrived = true;
+              setLoading(false); // hide the shimmer the instant real words start arriving
+            }
+            liveText += payload.delta;
+            setDisplayText(liveText);
+          }
+
+          if (payload.done) {
+            liveText = payload.text || liveText;
+          }
+        }
+      }
+
+      setIsRevealing(false);
+      skipTypewriterRef.current = true; // text is already revealed live, don't replay the animation
+      setPoemText(liveText);
+
       // Compute author name
       let labelAuthorName = "";
       if (customStyle.trim()) {
@@ -407,20 +528,24 @@ I find you always by my side."`;
       setActiveMobileTab("preview");
     } catch (err: any) {
       console.error(err);
-      setErrorStatus(err.message || (language === "bn" ? "সংযোগ করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।" : "Something went wrong on our end. Let's try that again."));
+      setErrorStatus(err.message || (language === "bn" ? "সংযোগ করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।" : "Something went wrong on our end. Let's try that again."));
+      setIsRevealing(false);
     } finally {
       setLoading(false);
     }
   };
 
   // --- Recitation Engines ---
-  const startRecitation = (textToRead: string) => {
-    if (!textToRead) return;
+  // Primary path: Gemini's native TTS for warm, natural-sounding recitation.
+  // Fallback path: the browser's built-in speechSynthesis, used only if the Gemini call fails
+  // (e.g. offline, quota exhausted) so recitation never breaks entirely.
+  const startRecitationFallback = (textToRead: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      alert(language === "bn" ? "দুঃখিত, আবৃত্তি সমর্থনটি এই ব্রাউজারে উপলব্ধ নয়।" : "Speech synthesis is not supported on this browser.");
+      alert(language === "bn" ? "দুঃখিত, আবৃত্তি সমর্থনটি এই ব্রাউজারে উপলব্ধ নয়।" : "Speech synthesis is not supported on this browser.");
       return;
     }
 
+    setUsingFallbackVoice(true);
     window.speechSynthesis.cancel();
     const cleanSpeechText = textToRead
       .replace(/[*#_~`\[\]]/g, " ")
@@ -446,39 +571,108 @@ I find you always by my side."`;
     utterance.onstart = () => {
       setIsPlayingAudio(true);
       setIsAudioPaused(false);
+      setAudioLoading(false);
     };
-
     utterance.onend = () => {
       setIsPlayingAudio(false);
       setIsAudioPaused(false);
     };
-
     utterance.onerror = () => {
       setIsPlayingAudio(false);
       setIsAudioPaused(false);
+      setAudioLoading(false);
     };
 
     window.speechSynthesis.speak(utterance);
   };
 
-  const pauseRecitation = () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      if (isPlayingAudio && !isAudioPaused) {
-        window.speechSynthesis.pause();
-        setIsAudioPaused(true);
-      } else if (isPlayingAudio && isAudioPaused) {
-        window.speechSynthesis.resume();
-        setIsAudioPaused(false);
+  const startRecitation = async (textToRead: string) => {
+    if (!textToRead) return;
+    setUsingFallbackVoice(false);
+    setAudioLoading(true);
+
+    try {
+      const res = await fetch("/api/recite-poetry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textToRead, language, voice: geminiVoice }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Recitation service unavailable");
       }
+
+      const blob = await res.blob();
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+      const url = URL.createObjectURL(blob);
+      audioUrlRef.current = url;
+
+      if (!audioElRef.current) {
+        audioElRef.current = new Audio();
+      }
+      const audioEl = audioElRef.current;
+      audioEl.src = url;
+      audioEl.playbackRate = playbackRate;
+
+      audioEl.onplay = () => {
+        setIsPlayingAudio(true);
+        setIsAudioPaused(false);
+        setAudioLoading(false);
+      };
+      audioEl.onended = () => {
+        setIsPlayingAudio(false);
+        setIsAudioPaused(false);
+      };
+      audioEl.onerror = () => {
+        setIsPlayingAudio(false);
+        setIsAudioPaused(false);
+        setAudioLoading(false);
+      };
+
+      await audioEl.play();
+    } catch (err) {
+      console.warn("Gemini recitation failed, falling back to browser voice:", err);
+      setAudioLoading(false);
+      startRecitationFallback(textToRead);
+    }
+  };
+
+  const pauseRecitation = () => {
+    if (usingFallbackVoice) {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        if (isPlayingAudio && !isAudioPaused) {
+          window.speechSynthesis.pause();
+          setIsAudioPaused(true);
+        } else if (isPlayingAudio && isAudioPaused) {
+          window.speechSynthesis.resume();
+          setIsAudioPaused(false);
+        }
+      }
+      return;
+    }
+
+    const audioEl = audioElRef.current;
+    if (!audioEl) return;
+    if (isPlayingAudio && !isAudioPaused) {
+      audioEl.pause();
+      setIsAudioPaused(true);
+    } else if (isPlayingAudio && isAudioPaused) {
+      audioEl.play();
+      setIsAudioPaused(false);
     }
   };
 
   const stopRecitation = () => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      setIsPlayingAudio(false);
-      setIsAudioPaused(false);
     }
+    if (audioElRef.current) {
+      audioElRef.current.pause();
+      audioElRef.current.currentTime = 0;
+    }
+    setIsPlayingAudio(false);
+    setIsAudioPaused(false);
+    setAudioLoading(false);
   };
 
   // --- Copy, Save and Export High-Resolution Calligraphy Graphics Canvas ---
@@ -676,9 +870,19 @@ I find you always by my side."`;
 
             {/* Input Prompt Block */}
             <div className="space-y-1.5 text-left">
-              <label className="text-xs uppercase tracking-wide font-bold text-[#4a3419] dark:text-amber-200/80 block font-serif">
-                {language === "bn" ? "তোমার কবিতার বিষয়" : "What's the poem about?"}
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs uppercase tracking-wide font-bold text-[#4a3419] dark:text-amber-200/80 block font-serif">
+                  {language === "bn" ? "তোমার কবিতার বিষয়" : "What's the poem about?"}
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSuggestIdea}
+                  className="flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-400 hover:text-amber-950 dark:hover:text-amber-200 transition-colors cursor-pointer"
+                >
+                  <Sparkle className="w-3 h-3" />
+                  {language === "bn" ? "আইডিয়া দাও" : "Give me an idea"}
+                </button>
+              </div>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -859,7 +1063,7 @@ I find you always by my side."`;
             {/* Run Poetry generator button */}
             <button
               onClick={handleGeneratePoetry}
-              disabled={loading || !prompt.trim()}
+              disabled={loading || !prompt.trim() || (rateLimitResetIn > 0 && rateLimitRemaining === 0)}
               className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#784820] hover:bg-[#593212] disabled:bg-[#d0c5af] disabled:cursor-not-allowed text-white font-serif font-bold text-sm tracking-wide rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer"
             >
               {loading ? (
@@ -868,17 +1072,38 @@ I find you always by my side."`;
                 <Sparkles className="w-4 h-4 text-amber-200 fill-amber-200" />
               )}
               <span>
-                {loading 
-                  ? (language === "bn" ? "কাব্য সাধনা চলছে..." : "Composing Lines...") 
-                  : (language === "bn" ? "কবিতা তৈরি করুন" : "Generate Poetry")}
+                {rateLimitResetIn > 0 && rateLimitRemaining === 0
+                  ? (language === "bn" ? `${rateLimitResetIn} সেকেন্ড অপেক্ষা করো` : `Wait ${rateLimitResetIn}s`)
+                  : loading 
+                    ? (language === "bn" ? "কাব্য সাধনা চলছে..." : "Composing Lines...") 
+                    : (language === "bn" ? "কবিতা তৈরি করুন" : "Generate Poetry")}
               </span>
             </button>
 
+            {/* Gentle heads-up when only a couple of requests remain this minute */}
+            {rateLimitRemaining !== null && rateLimitRemaining > 0 && rateLimitRemaining <= 2 && (
+              <p className="text-[11px] text-amber-800/70 dark:text-amber-300/60 text-center -mt-3 font-serif">
+                {language === "bn"
+                  ? `এই মিনিটে আর ${rateLimitRemaining}টা কবিতা লেখা যাবে`
+                  : `${rateLimitRemaining} generation${rateLimitRemaining > 1 ? "s" : ""} left this minute`}
+              </p>
+            )}
+
             {/* Prompt validation or feedback alerts */}
             {errorStatus && (
-              <div className="p-3 rounded-xl bg-red-100/40 border border-red-300 text-red-950 text-xs flex items-start gap-2 text-left font-serif">
-                <AlertCircle className="w-4 h-4 text-red-700 shrink-0 mt-0.5" />
-                <span>{errorStatus}</span>
+              <div className="p-3 rounded-xl bg-red-100/40 dark:bg-red-950/20 border border-red-300 dark:border-red-900/40 text-red-950 dark:text-red-200 text-xs flex items-start gap-2 text-left font-serif">
+                <AlertCircle className="w-4 h-4 text-red-700 dark:text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1 flex items-center justify-between gap-2 flex-wrap">
+                  <span>{errorStatus}</span>
+                  <button
+                    onClick={handleGeneratePoetry}
+                    disabled={loading || !prompt.trim() || (rateLimitResetIn > 0 && rateLimitRemaining === 0)}
+                    className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-700/10 hover:bg-red-700/20 disabled:opacity-40 disabled:cursor-not-allowed text-red-800 dark:text-red-300 font-bold transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    {language === "bn" ? "আবার চেষ্টা করো" : "Try again"}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1059,24 +1284,43 @@ I find you always by my side."`;
                         startRecitation(poemText);
                       }
                     }}
-                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                    disabled={audioLoading}
+                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait ${
                       isPlayingAudio && !isAudioPaused
                         ? "bg-[#C45E20] text-white animate-pulse"
-                        : "bg-[#FAF5EA] hover:bg-[#f3ead3] text-[#7A4B24] border border-[#DECBAD]"
+                        : "bg-[#FAF5EA] dark:bg-amber-100/10 hover:bg-[#f3ead3] dark:hover:bg-amber-100/20 text-[#7A4B24] dark:text-amber-300 border border-[#DECBAD] dark:border-amber-100/10"
                     }`}
                     title={language === "bn" ? "কবিতা আবৃত্তি" : "Listen to your poem"}
                   >
-                    <Volume2 className="w-4 sm:w-4.5 h-4 sm:h-4.5" />
+                    {audioLoading ? (
+                      <Loader2 className="w-4 sm:w-4.5 h-4 sm:h-4.5 animate-spin" />
+                    ) : (
+                      <Volume2 className="w-4 sm:w-4.5 h-4 sm:h-4.5" />
+                    )}
                   </button>
                   <div className="text-left hidden sm:block">
-                    <span className="text-[10px] font-serif font-bold text-amber-900 block leading-tight">
-                      {isPlayingAudio && !isAudioPaused 
-                        ? (language === "bn" ? "আবৃত্তি বন্ধ" : "Pause Audio") 
-                        : (language === "bn" ? "আবৃত্তি শুনুন" : "Listen")}
+                    <span className="text-[10px] font-serif font-bold text-amber-900 dark:text-amber-100 block leading-tight">
+                      {audioLoading
+                        ? (language === "bn" ? "প্রস্তুত হচ্ছে..." : "Preparing...")
+                        : isPlayingAudio && !isAudioPaused
+                          ? (language === "bn" ? "আবৃত্তি বন্ধ" : "Pause Audio")
+                          : (language === "bn" ? "আবৃত্তি শুনুন" : "Listen")}
                     </span>
-                    <span className="text-[10px] text-[#6b5233] dark:text-amber-200/60 block shrink max-w-[80px] truncate leading-none">
-                      {selectedVoiceName ? selectedVoiceName.split(" ")[0] : (language === "bn" ? "কণ্ঠস্বর" : "Default voice")}
-                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isPlayingAudio) stopRecitation();
+                        setGeminiVoice((v) => (v === "Kore" ? "Charon" : "Kore"));
+                      }}
+                      className="text-[10px] text-[#6b5233] dark:text-amber-200/60 hover:text-amber-800 dark:hover:text-amber-300 block shrink max-w-[90px] truncate leading-none cursor-pointer underline decoration-dotted"
+                      title={language === "bn" ? "কণ্ঠস্বর পাল্টাও" : "Switch voice"}
+                    >
+                      {usingFallbackVoice
+                        ? (language === "bn" ? "ডিভাইস কণ্ঠস্বর" : "Device voice")
+                        : geminiVoice === "Kore"
+                          ? (language === "bn" ? "কোরে (কোমল)" : "Kore (warm)")
+                          : (language === "bn" ? "কেরন (গম্ভীর)" : "Charon (deep)")}
+                    </button>
                   </div>
                 </div>
 
