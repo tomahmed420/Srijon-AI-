@@ -1,10 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
 @import "tailwindcss";
 
+/* Enables manual "dark" class toggling instead of relying only on OS preference */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", "Hind Siliguri", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", "Hind Siliguri", Georgia, serif;
   --font-mono: "Fira Code", ui-monospace, monospace;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Custom Scrollbar */
