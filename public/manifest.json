@@ -1,7 +1,7 @@
 {
   "name": "সৃজন AI (Srijon AI Bangladesh) — বাংলা কবিতা এআই",
   "short_name": "সৃজন AI",
-  "description": "বাংলাদেশের জনপ্রিয়তম বাংলা কবিতা এআই এবং সর্বশ্রেষ্ঠ বাংলা লেখা টুলস সমৃদ্ধ সৃজন এআই বাংলাদেশ পোর্টাল।",
+  "description": "প্রিয় বাংলা কবিদের ধাঁচে কয়েক সেকেন্ডে নিজের কবিতা তৈরি করুন — সৃজন এআই বাংলাদেশ।",
   "start_url": "/?lang=bn&utm_source=pwa",
   "display": "standalone",
   "background_color": "#f1ebd9",
